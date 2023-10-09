@@ -33,31 +33,15 @@ import com.alipay.sofa.rpc.listener.ProviderInfoListener;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.alipay.sofa.rpc.common.RpcConfigs.getBooleanValue;
 import static com.alipay.sofa.rpc.common.RpcConfigs.getIntValue;
 import static com.alipay.sofa.rpc.common.RpcConfigs.getStringValue;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_REJECTED_EXECUTION_POLICY;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_ADDRESS_HOLDER;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_ADDRESS_WAIT;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_CHECK;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_CLUSTER;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_CONCURRENTS;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_CONNECTION_HOLDER;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_CONNECTION_NUM;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_CONNECT_TIMEOUT;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_DISCONNECT_TIMEOUT;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_HEARTBEAT_PERIOD;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_INJVM;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_INVOKE_TYPE;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_LAZY;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_LOAD_BALANCER;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_RECONNECT_PERIOD;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_REPEATED_REFERENCE_LIMIT;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_RETRIES;
-import static com.alipay.sofa.rpc.common.RpcOptions.CONSUMER_STICKY;
-import static com.alipay.sofa.rpc.common.RpcOptions.DEFAULT_PROTOCOL;
+import static com.alipay.sofa.rpc.common.RpcOptions.*;
 
 /**
  * 服务消费者配置
@@ -229,6 +213,11 @@ public class ConsumerConfig<T> extends AbstractInterfaceConfig<T, ConsumerConfig
      * 接口下每方法的最大可并行执行请求数，配置-1关闭并发过滤器，等于0表示开启过滤但是不限制
      */
     protected int                                   concurrents             = getIntValue(CONSUMER_CONCURRENTS);
+
+    /**
+     * 失败重试的异常类型
+     */
+    protected String retryExceptionClass = getStringValue(CONSUMER_RETRY_EXCEPTION_CLASS);
 
     /*---------- 参数配置项结束 ------------*/
 
@@ -440,6 +429,37 @@ public class ConsumerConfig<T> extends AbstractInterfaceConfig<T, ConsumerConfig
     public ConsumerConfig<T> setRetries(int retries) {
         this.retries = retries;
         return this;
+    }
+
+    /**
+     * Setter method for property <tt>retryExceptionClass</tt>.
+     *
+     * @param retryExceptionClass value to be assigned to property retryExceptionClass
+     */
+    public void setRetryExceptionClass(String retryExceptionClass) {
+        this.retryExceptionClass = retryExceptionClass;
+    }
+
+    /**
+     * Getter method for property <tt>retryExceptionClass</tt>.
+     *
+     * @return property value of retryExceptionClass
+     */
+    public String getRetryExceptionClass() {
+        return retryExceptionClass;
+    }
+
+    /**
+     * 获取重试的异常类,逗号分隔不同的类
+     * @return
+     */
+    public Set<String> getRetryExceptionClassSet() {
+        Set<String> retryExceptionClassSet = new HashSet<String>();
+        if (retryExceptionClass != null) {
+            final String[] splitClassName = retryExceptionClass.split(",");
+            retryExceptionClassSet.addAll(Arrays.asList(splitClassName));
+        }
+        return retryExceptionClassSet;
     }
 
     /**

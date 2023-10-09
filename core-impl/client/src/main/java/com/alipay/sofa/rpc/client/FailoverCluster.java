@@ -30,6 +30,7 @@ import com.alipay.sofa.rpc.log.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 故障转移，支持重试和指定地址调用
@@ -96,10 +97,19 @@ public class FailoverCluster extends AbstractCluster {
                     }
                 }
             } catch (Exception e) { // 其它异常不重试
-                throw new SofaRpcException(RpcErrorType.CLIENT_UNDECLARED_ERROR,
-                    "Failed to call " + request.getInterfaceName() + "." + request.getMethodName()
-                        + " on remote server: " + providerInfo + ", cause by unknown exception: "
-                        + e.getClass().getName() + ", message is: " + e.getMessage(), e);
+                final Set<String> retryExceptionClassSet = consumerConfig.getRetryExceptionClassSet();
+                if (retryExceptionClassSet != null && retryExceptionClassSet.contains(e.getClass().getName())) {
+                    throwable = new SofaRpcException(RpcErrorType.CLIENT_UNDECLARED_ERROR,
+                            "Failed to call " + request.getInterfaceName() + "." + request.getMethodName()
+                                    + " on remote server: " + providerInfo + ", cause by unknown exception: "
+                                    + e.getClass().getName() + ", message is: " + e.getMessage(), e);
+                    time++;
+                } else {
+                    throw new SofaRpcException(RpcErrorType.CLIENT_UNDECLARED_ERROR,
+                            "Failed to call " + request.getInterfaceName() + "." + request.getMethodName()
+                                    + " on remote server: " + providerInfo + ", cause by unknown exception: "
+                                    + e.getClass().getName() + ", message is: " + e.getMessage(), e);
+                }
             } finally {
                 if (RpcInternalContext.isAttachmentEnable()) {
                     RpcInternalContext.getContext().setAttachment(RpcConstants.INTERNAL_KEY_INVOKE_TIMES,
